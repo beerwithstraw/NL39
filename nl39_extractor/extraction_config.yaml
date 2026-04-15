@@ -1,0 +1,49 @@
+# ============================================================
+# NL-39 Extraction Pipeline Configuration
+# Edit this file before running: python3 pipeline.py
+# ============================================================
+
+# Full path to the folder containing FY* subfolders
+# Mac example:     /Users/pulkit/Desktop/Forms
+base_path: "/Users/pulkit/Desktop/Forms"
+
+# Fiscal years to process — list one or more
+fiscal_years:
+  - FY2025
+  - FY2026
+
+# Quarters to process
+# Use [all] to process all four quarters, or list specific quarters e.g. [Q1, Q3]
+quarters: all
+
+# Full path to the master Excel output file (including filename)
+master_sheet_path: "/Users/pulkit/Desktop/Forms/NL39_Master.xlsx"
+
+# Full path to the processed log file
+# This JSON file tracks which PDFs have already been extracted
+processed_log_path: "/Users/pulkit/Desktop/Forms/.NL39_processed_log.json"
+
+# How to handle Consolidated_*.pdf files at the Q{n}/Consolidated/ level
+# 'dynamic' = scan pages using keyword detection to find NL-39 section (recommended)
+# 'skip'    = ignore all consolidated PDFs
+consolidated_mode: dynamic
+
+# Keywords used to detect the NL-39 section in a consolidated PDF
+nl39_keywords:
+  - "NL-39"
+  - "AGEING OF CLAIMS"
+  - "NO. OF CLAIMS PAID"
+  - "AMOUNT OF CLAIMS PAID"
+
+# Minimum keyword matches to distinguish the actual NL-39 data page from TOC entries.
+# TOC pages match at most 2 (NL-39 + AGEING OF CLAIMS); real form pages match 3+.
+nl39_keyword_min_matches: 3
+
+# Per-company page overrides (optional, 1-indexed)
+# Use when auto-detection picks the wrong page range for a specific company
+# Example:
+# nl39_page_overrides:
+#   new_india:
+#     start: 12
+#     end: 13
+nl39_page_overrides: {}
