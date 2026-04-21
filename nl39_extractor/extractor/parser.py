@@ -28,6 +28,39 @@ from extractor.normaliser import clean_number, normalise_text
 logger = logging.getLogger(__name__)
 
 
+def _detect_lob_col(table) -> int:
+    """Find the column holding LOB labels from the 'Line of Business' header."""
+    for row in table[:6]:
+        if not row:
+            continue
+        upper = [str(c or "").upper().strip() for c in row]
+        if "LINE OF BUSINESS" in upper:
+            return upper.index("LINE OF BUSINESS")
+    return 1
+
+
+def _filter_data_tables(tables, min_rows: int = 5) -> list:
+    """Return only tables that have enough rows to contain LOB data."""
+    return [t for t in tables if t and len(t) >= min_rows]
+
+
+def _split_stacked_table(table):
+    """
+    When QTR and YTD sections are stacked in one extracted table, split at the
+    second period header row (identified by a repeated 'S.NO.' or 'SL.NO.' cell).
+    Returns (qtr_rows, ytd_rows). ytd_rows is empty if no split point found.
+    """
+    header_positions = []
+    for i, row in enumerate(table):
+        upper = [str(c or "").upper().strip() for c in (row or [])[:4]]
+        if "S.NO." in upper or "SL.NO." in upper:
+            header_positions.append(i)
+    if len(header_positions) >= 2:
+        split = header_positions[1]
+        return table[:split], table[split:]
+    return table, []
+
+
 def _resolve_lob(raw_label: str, company_key: str):
     """
     Normalise a PDF row label → canonical LOB key.
@@ -45,26 +78,21 @@ def _resolve_lob(raw_label: str, company_key: str):
     return LOB_ALIASES.get(normalised)
 
 
-def _extract_page(table, company_key: str, period_key: str, period_data: PeriodData) -> int:
+def _extract_page(table, company_key: str, period_key: str, period_data: PeriodData, lob_col: int = 1) -> int:
     """
     Parse one pdfplumber table (one page) and store values into period_data.
 
-    Args:
-        table:       list[list[str|None]] from pdfplumber.extract_table()
-        company_key: e.g. "bajaj_allianz"
-        period_key:  "qtr" (page 0) or "ytd" (page 1)
-        period_data: PeriodData mutated in-place
-
-    Returns number of LOB rows extracted.
+    lob_col: column index of the LOB label (default 1; some PDFs use 2).
+    COLUMN_SCHEMA is defined relative to lob_col=1, so shift indices by (lob_col - 1).
     """
     lobs_found = 0
+    col_offset = lob_col - 1
 
     for row in table:
         if not row or len(row) < 3:
             continue
 
-        # Col 1 = LOB label; col 0 = Sl.No. (ignored)
-        raw_label = row[1] if len(row) > 1 else (row[0] or "")
+        raw_label = row[lob_col] if len(row) > lob_col else (row[0] or "")
         lob_key = _resolve_lob(raw_label, company_key)
         if lob_key is None:
             continue
@@ -73,9 +101,10 @@ def _extract_page(table, company_key: str, period_key: str, period_data: PeriodD
             period_data.data[lob_key] = {}
 
         for col_idx, metric_key in COLUMN_SCHEMA.items():
-            if col_idx >= len(row):
+            actual_col = col_idx + col_offset
+            if actual_col >= len(row):
                 continue
-            val = clean_number(row[col_idx])
+            val = clean_number(row[actual_col])
             if metric_key not in period_data.data[lob_key]:
                 period_data.data[lob_key][metric_key] = {"qtr": None, "ytd": None}
             if val is not None:
@@ -125,15 +154,23 @@ def parse_pdf(pdf_path: str, company_key: str, quarter: str = "", year: str = ""
             if n_pages == 1:
                 # Single-page layout: both QTR and YTD tables stacked on page 0.
                 # Use extract_tables() to get both; first = qtr, second = ytd.
-                tables = pdf.pages[0].extract_tables()
+                # Filter out header-only tables (< 5 rows) before assigning periods.
+                tables = _filter_data_tables(pdf.pages[0].extract_tables())
                 if len(tables) >= 2:
-                    n = _extract_page(tables[0], company_key, "qtr", period_data)
+                    lob_col = _detect_lob_col(tables[0])
+                    n = _extract_page(tables[0], company_key, "qtr", period_data, lob_col)
                     logger.debug(f"Page 0 table[0] (qtr): {n} LOBs extracted")
-                    n = _extract_page(tables[1], company_key, "ytd", period_data)
+                    lob_col = _detect_lob_col(tables[1])
+                    n = _extract_page(tables[1], company_key, "ytd", period_data, lob_col)
                     logger.debug(f"Page 0 table[1] (ytd): {n} LOBs extracted")
                 elif len(tables) == 1:
-                    n = _extract_page(tables[0], company_key, "qtr", period_data)
-                    logger.debug(f"Page 0 (qtr only, 1 table): {n} LOBs extracted")
+                    lob_col = _detect_lob_col(tables[0])
+                    qtr_rows, ytd_rows = _split_stacked_table(tables[0])
+                    n = _extract_page(qtr_rows, company_key, "qtr", period_data, lob_col)
+                    logger.debug(f"Page 0 (qtr, split): {n} LOBs extracted")
+                    if ytd_rows:
+                        n = _extract_page(ytd_rows, company_key, "ytd", period_data, lob_col)
+                        logger.debug(f"Page 0 (ytd, split): {n} LOBs extracted")
                 else:
                     logger.warning(f"Page 0: no table found in {pdf_path}")
             else:
@@ -141,7 +178,8 @@ def parse_pdf(pdf_path: str, company_key: str, quarter: str = "", year: str = ""
                 if n_pages >= 1:
                     table = pdf.pages[0].extract_table()
                     if table:
-                        n = _extract_page(table, company_key, "qtr", period_data)
+                        lob_col = _detect_lob_col(table)
+                        n = _extract_page(table, company_key, "qtr", period_data, lob_col)
                         logger.debug(f"Page 0 (qtr): {n} LOBs extracted")
                     else:
                         logger.warning(f"Page 0: no table found in {pdf_path}")
@@ -149,7 +187,8 @@ def parse_pdf(pdf_path: str, company_key: str, quarter: str = "", year: str = ""
                 if n_pages >= 2:
                     table = pdf.pages[1].extract_table()
                     if table:
-                        n = _extract_page(table, company_key, "ytd", period_data)
+                        lob_col = _detect_lob_col(table)
+                        n = _extract_page(table, company_key, "ytd", period_data, lob_col)
                         logger.debug(f"Page 1 (ytd): {n} LOBs extracted")
                     else:
                         logger.warning(f"Page 1: no table found in {pdf_path}")

@@ -81,6 +81,8 @@ LOB_ALIASES = {
     # Segments
     "other segments (a)":                               "other_segments",
     "other segments":                                   "other_segments",
+    "others (a)":                                       "other_segments",   # Magma
+    "other liability":                                  "other_segments",   # Shriram
     "miscellaneous":                                    "total_miscellaneous",
     "others":                                           "total_miscellaneous",
 }

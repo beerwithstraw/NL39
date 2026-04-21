@@ -160,5 +160,45 @@ DEDICATED_PARSER: dict = {}
 # These LOBs will be SKIPPED in the COMPLETENESS check (no WARN or FAIL).
 # ---------------------------------------------------------------------------
 COMPLETENESS_IGNORE: dict = {
-    "bajaj_allianz": {"other_segments"},   # Bajaj leaves Other Segments (a) blank
+    "bajaj_allianz":       {"other_segments"},
+    # Health-only insurers — write only health / PA / travel
+    "niva_bupa":           {"fire", "motor_od", "motor_tp", "marine_cargo", "marine_hull",
+                            "wc_el", "public_product_liability", "engineering", "aviation",
+                            "crop_insurance", "other_segments", "total_miscellaneous"},
+    "aditya_birla_health": {"fire", "motor_od", "motor_tp", "marine_cargo", "marine_hull",
+                            "wc_el", "public_product_liability", "engineering", "aviation",
+                            "crop_insurance", "other_segments", "total_miscellaneous"},
+    "narayana_health":     {"fire", "motor_od", "motor_tp", "marine_cargo", "marine_hull",
+                            "wc_el", "public_product_liability", "engineering", "aviation",
+                            "crop_insurance", "other_segments", "total_miscellaneous",
+                            "personal_accident", "travel_insurance"},
+    "manipal_cigna":       {"fire", "motor_od", "motor_tp", "marine_cargo", "marine_hull",
+                            "wc_el", "public_product_liability", "engineering", "aviation",
+                            "crop_insurance", "other_segments", "total_miscellaneous"},
+    "care_health":         {"fire", "motor_od", "motor_tp", "marine_cargo", "marine_hull",
+                            "wc_el", "public_product_liability", "engineering", "aviation",
+                            "crop_insurance", "other_segments", "total_miscellaneous"},
+    "galaxy_health":       {"fire", "motor_od", "motor_tp", "marine_cargo", "marine_hull",
+                            "wc_el", "public_product_liability", "engineering", "aviation",
+                            "crop_insurance", "other_segments", "total_miscellaneous",
+                            "travel_insurance"},
+    # Specialized insurers — limited LOB scope
+    "aic":  {"fire", "motor_od", "motor_tp", "health", "marine_cargo", "marine_hull",
+             "personal_accident", "travel_insurance", "wc_el", "public_product_liability",
+             "engineering", "aviation", "other_segments"},
+    "ecgc": {"fire", "motor_od", "motor_tp", "health", "marine_cargo", "marine_hull",
+             "personal_accident", "travel_insurance", "wc_el", "public_product_liability",
+             "engineering", "aviation", "crop_insurance", "other_segments"},
+    # ACKO — digital motor/health insurer; nil fire + several other LOBs
+    "acko": {"fire", "marine_cargo", "marine_hull", "wc_el",
+             "engineering", "aviation", "crop_insurance", "other_segments"},
+}
+
+# ---------------------------------------------------------------------------
+# Bucket-sum ignore: (lob_key,) tuples whose AMOUNT_BUCKET_SUM check is skipped.
+# Use when the PDF masks a cell with '#' (confidential data), making the
+# individual bucket sum structurally unable to equal the total.
+# ---------------------------------------------------------------------------
+BUCKET_SUM_IGNORE: dict = {
+    "aic": {"crop_insurance"},   # QTR amount_6m_1y masked as '#' in PDF
 }

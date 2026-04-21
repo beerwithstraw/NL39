@@ -17,7 +17,7 @@ from dataclasses import dataclass, asdict
 from extractor.models import CompanyExtract, PeriodData
 from config.lob_registry import LOB_ORDER
 from config.row_registry import COUNT_BUCKETS, AMOUNT_BUCKETS
-from config.company_registry import COMPLETENESS_IGNORE
+from config.company_registry import COMPLETENESS_IGNORE, BUCKET_SUM_IGNORE
 
 logger = logging.getLogger(__name__)
 
@@ -119,6 +119,8 @@ def _check_amount_bucket_sum(
     p_key: str,
 ) -> Optional[ValidationResult]:
     """AMOUNT_BUCKET_SUM: sum of the 7 amount buckets should equal total_amount."""
+    if lob in BUCKET_SUM_IGNORE.get(exc.company_key, set()):
+        return None
     total = _get_val(lob_data, "total_amount", p_key)
     if total is None:
         return None
