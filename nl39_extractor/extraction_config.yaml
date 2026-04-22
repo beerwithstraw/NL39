@@ -42,7 +42,7 @@ nl39_keyword_min_matches: 3
 # Per-company page overrides (optional, 1-indexed)
 # Use when auto-detection picks the wrong page range for a specific company
 # Example:
-# nl39_page_overrides:
+nl39_page_overrides:
 #   new_india:
 #     start: 12
 #     end: 13
