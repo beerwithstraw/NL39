@@ -35,11 +35,16 @@ DEFAULT_KEYWORDS = [
 DEFAULT_MIN_MATCHES = 3
 
 # Regex to detect any IRDAI form header on a page
-FORM_HEADER_PATTERN = re.compile(r"FORM\s+NL[-\s]?(\d+)", re.IGNORECASE)
-TOC_SKIP_PATTERN = re.compile(
-    r"TABLE\s+OF\s+CONTENTS|FORM\s+INDEX|INDEX\s+OF\s+FORMS",
-    re.IGNORECASE,
+FORM_HEADER_PATTERN = re.compile(
+    r"^\s*(?:FORM\s+)?NL[-\s]?(\d+)|\bFORM\s+NL[-\s]?(\d+)", 
+    re.IGNORECASE | re.MULTILINE
 )
+def is_toc_page(text: str) -> bool:
+    if re.search(r"TABLE\s+OF\s+CONTENTS|FORM\s+INDEX|INDEX\s+OF\s+FORMS", text, re.IGNORECASE):
+        return True
+    matches = re.findall(r"\bNL[-\s]?(\d+)\b", text, re.IGNORECASE)
+    valid_forms = set(m for m in matches if 1 <= int(m) <= 45)
+    return len(valid_forms) >= 4
 
 
 def _page_keyword_count(text: str, keywords: List[str]) -> int:
@@ -83,7 +88,7 @@ def find_nl39_pages(
         # --- Find start page ---
         start_page = None
         for i, text in enumerate(page_texts):
-            if TOC_SKIP_PATTERN.search(text):
+            if is_toc_page(text):
                 logger.debug(f"  page {i + 1}: TOC page, skipping")
                 continue
             if _page_keyword_count(text, keywords) >= min_matches:
@@ -101,7 +106,10 @@ def find_nl39_pages(
         for i in range(start_page + 1, n_pages):
             text = page_texts[i]
             matches = FORM_HEADER_PATTERN.findall(text)
-            non_nl39 = [m for m in matches if m != "39"]
+            flat_matches = []
+            for m in matches:
+                flat_matches.extend(g for g in m if g)
+            non_nl39 = [m for m in flat_matches if m != "39"]
             if non_nl39:
                 end_page = i - 1
                 logger.debug(

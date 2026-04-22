@@ -306,14 +306,14 @@ def save_workbook(extractions: List[CompanyExtract], output_path: str, stats: Op
     wb.save(output_path)
     logger.info(f"Excel workbook saved to {output_path}")
 
-def write_validation_summary_sheet(report_path: str, master_path: str):
+def write_validation_summary_sheet(report_path: str, master_path: str, force_company: str = None):
     """
     Reads validation_report.csv and appends a 'Validation_Summary' sheet to master_path.
     Granularity: 1 row per (Company, Quarter, Year).
     """
     import pandas as pd
     df = pd.read_csv(report_path)
-    
+
     # Group by the specified granularity
     summary = df.pivot_table(
         index=['company', 'quarter', 'year'],
@@ -321,32 +321,39 @@ def write_validation_summary_sheet(report_path: str, master_path: str):
         aggfunc='size',
         fill_value=0
     ).reset_index()
-    
+
     # Ensure PASS, WARN, FAIL exist
     for col in ['PASS', 'WARN', 'FAIL', 'SKIP']: # Added SKIP here as it's a valid status
         if col not in summary.columns:
             summary[col] = 0
-            
+
     # Assumes one PDF per company+quarter+year — will need revision if amended filings are introduced.
     summary['Files_Processed'] = 1
-    
+
     # Enforce exact column order and rename
     summary = summary.rename(columns={'company': 'Company', 'quarter': 'Quarter', 'year': 'Year'})
     cols = ['Company', 'Quarter', 'Year', 'Files_Processed', 'PASS', 'SKIP', 'WARN', 'FAIL']
-    
+
     # Calculate Total_Checks from the sum of other status columns
     summary['Total_Checks'] = summary[['PASS', 'SKIP', 'WARN', 'FAIL']].sum(axis=1)
-    
+
     # Reorder columns to include Total_Checks in the desired position
     cols.insert(4, 'Total_Checks') # Insert 'Total_Checks' after 'Files_Processed'
-    
+
     summary = summary[cols]
-    
+    if force_company:
+        try:
+            existing = pd.read_excel(master_path, sheet_name="Validation_Summary")
+            companies_in_new = set(summary["Company"].unique())
+            existing = existing[~existing["Company"].isin(companies_in_new)]
+            summary = pd.concat([existing, summary], ignore_index=True)
+        except Exception:
+            pass
     # Append to Excel
     with pd.ExcelWriter(master_path, mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
         summary.to_excel(writer, sheet_name='Validation_Summary', index=False)
 
-def write_validation_detail_sheet(report_path: str, master_path: str):
+def write_validation_detail_sheet(report_path: str, master_path: str, force_company: str = None):
     """
     Reads validation_report.csv, filters for FAILs, and appends a 'Validation_Detail'
     sheet to master_path with Fail_Type and row coloring.
@@ -373,6 +380,15 @@ def write_validation_detail_sheet(report_path: str, master_path: str):
         detail = detail.rename(columns=cols_map)[list(cols_map.values())]
         detail = detail.sort_values(by='Status', ascending=True).reset_index(drop=True)
 
+    if force_company:
+        try:
+            run_companies = set(pd.read_csv(report_path)["company"].unique())
+            existing_detail = pd.read_excel(master_path, sheet_name="Validation_Detail")
+            if "Company" in existing_detail.columns:
+                existing_detail = existing_detail[~existing_detail["Company"].isin(run_companies)]
+            detail = pd.concat([existing_detail, detail], ignore_index=True)
+        except Exception:
+            pass
     # Append to Excel
     with pd.ExcelWriter(master_path, mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
         detail.to_excel(writer, sheet_name='Validation_Detail', index=False)
