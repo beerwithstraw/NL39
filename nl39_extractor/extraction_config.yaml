@@ -46,3 +46,6 @@ nl39_keyword_min_matches: 3
 #   new_india:
 #     start: 12
 #     end: 13
+  NEWINDIA:
+    start: 39
+    end: 39
