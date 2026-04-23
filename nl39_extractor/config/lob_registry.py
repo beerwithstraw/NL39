@@ -73,6 +73,8 @@ LOB_ALIASES = {
     "workmen's compensation / employer's liability":    "wc_el",
     "workmen’s compensation /":                         "wc_el",
     "workmen's compensation /":                         "wc_el",
+    "workmen’s compensation/":                          "wc_el",
+    "workmen's compensation/":                          "wc_el",
     "workmen's compensation":                           "wc_el",
     "wc/el":                                            "wc_el",
     "public/ product liability":                        "public_product_liability",
@@ -83,6 +85,7 @@ LOB_ALIASES = {
     "engineering":                                      "engineering",
     "aviation":                                         "aviation",
     "crop insurance":                                   "crop_insurance",
+    "crop":                                             "crop_insurance",
     "weather / crop insurance":                         "crop_insurance",
     "weather/crop insurance":                           "crop_insurance",
     # Segments
