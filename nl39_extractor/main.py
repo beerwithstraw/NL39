@@ -39,7 +39,7 @@ console = Console()
 
 @click.group()
 def cli():
-    """NL39 Batch Premium Extractor CLI."""
+    """NL39 Ageing of Claims Extractor CLI."""
     pass
 
 

@@ -1,7 +1,7 @@
 """
 NL-39 Generic Parser.
 
-NL-39 (Ageing of Claims) has a transposed layout vs NL-39/NL-39/NL-39:
+NL-39 (Ageing of Claims) has a transposed layout vs most other schedules:
   - PDF rows   = LOBs  (Fire, Marine Cargo, Motor OD, ...)
   - PDF cols   = Metrics (ageing buckets: upto 1m, >1m-3m, ..., totals)
   - Page 1 (index 0) = "For the Quarter"   → qtr values

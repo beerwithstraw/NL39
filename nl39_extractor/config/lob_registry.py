@@ -1,9 +1,9 @@
 """
 LOB (Line of Business) Registry for NL-39.
 
-In NL-39, LOBs appear as ROW LABELS (col 1) — opposite to NL-39/NL-39/NL-39
+In NL-39, LOBs appear as ROW LABELS (col 1) — opposite to some other forms
 where LOBs are column headers. The canonical LOB keys are consistent with
-the other extractors for cross-form joins in the master output.
+other extractors for cross-form joins in the master output.
 
 NL-39 uses 15 LOB rows. No sub-group totals (no total_marine, total_motor,
 total_health, grand_total) — those don't appear in the ageing schedule.
