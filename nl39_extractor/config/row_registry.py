@@ -1,7 +1,7 @@
 """
 Metric (Ageing Bucket) Registry for NL-39.
 
-NL-39 has a transposed layout vs NL-4/NL-5/NL-7:
+NL-39 has a transposed layout vs NL-39/NL-39/NL-39:
   - Rows in the PDF  = LOBs  (Fire, Marine Cargo, ...)
   - Columns in the PDF = Metrics (ageing buckets + totals)
 
