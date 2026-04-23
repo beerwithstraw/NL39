@@ -346,7 +346,8 @@ def write_validation_summary_sheet(report_path: str, master_path: str, force_com
             existing = pd.read_excel(master_path, sheet_name="Validation_Summary")
             companies_in_new = set(summary["Company"].unique())
             existing = existing[~existing["Company"].isin(companies_in_new)]
-            summary = pd.concat([existing, summary], ignore_index=True)
+            if not existing.empty:
+                summary = pd.concat([existing, summary], ignore_index=True)
         except Exception:
             pass
     # Append to Excel
@@ -386,7 +387,8 @@ def write_validation_detail_sheet(report_path: str, master_path: str, force_comp
             existing_detail = pd.read_excel(master_path, sheet_name="Validation_Detail")
             if "Company" in existing_detail.columns:
                 existing_detail = existing_detail[~existing_detail["Company"].isin(run_companies)]
-            detail = pd.concat([existing_detail, detail], ignore_index=True)
+            if not existing_detail.empty:
+                detail = pd.concat([existing_detail, detail], ignore_index=True)
         except Exception:
             pass
     # Append to Excel
@@ -479,7 +481,10 @@ def append_to_master(
             )
         ]
 
-        df_combined = pd.concat([df_keep, df_new], ignore_index=True)
+        if not df_keep.empty:
+            df_combined = pd.concat([df_keep, df_new], ignore_index=True)
+        else:
+            df_combined = df_new
 
     with pd.ExcelWriter(str(master_path), engine="openpyxl") as writer:
         df_combined.to_excel(writer, sheet_name="Master_Data", index=False)

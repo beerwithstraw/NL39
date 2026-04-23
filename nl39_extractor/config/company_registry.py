@@ -163,7 +163,9 @@ COMPANY_DISPLAY_NAMES = {
 # Dedicated parser function name (empty = use generic NL-39 parser for all)
 # Add entries here as company-specific quirks are discovered.
 # ---------------------------------------------------------------------------
-DEDICATED_PARSER: dict = {}
+DEDICATED_PARSER = {
+    "icici_lombard": "parse_icici_lombard"
+}
 
 # ---------------------------------------------------------------------------
 # Completeness ignore: LOBs that are known to be blank for a specific company.

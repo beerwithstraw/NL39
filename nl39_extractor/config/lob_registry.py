@@ -69,10 +69,17 @@ LOB_ALIASES = {
     "workmen's compensation/ employer's liability":     "wc_el",
     "workmen\u2019s compensation/ employer\u2019s liability": "wc_el",
     "workmen's compensation/employer's liability":      "wc_el",
+    "workmen’s compensation / employer’s liability":    "wc_el",
+    "workmen's compensation / employer's liability":    "wc_el",
+    "workmen’s compensation /":                         "wc_el",
+    "workmen's compensation /":                         "wc_el",
     "workmen's compensation":                           "wc_el",
     "wc/el":                                            "wc_el",
     "public/ product liability":                        "public_product_liability",
     "public/product liability":                         "public_product_liability",
+    "public / product liability":                        "public_product_liability",
+    "public /product liability":                        "public_product_liability",
+    "epmubplilco/y eprr’osd liuacbti llitiaybility":    "public_product_liability",
     "engineering":                                      "engineering",
     "aviation":                                         "aviation",
     "crop insurance":                                   "crop_insurance",
@@ -84,6 +91,7 @@ LOB_ALIASES = {
     "others (a)":                                       "other_segments",   # Magma
     "other liability":                                  "other_segments",   # Shriram
     "miscellaneous":                                    "total_miscellaneous",
+    "total miscellaneous":                              "total_miscellaneous",
     "others":                                           "total_miscellaneous",
 }
 

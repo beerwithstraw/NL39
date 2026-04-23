@@ -92,8 +92,20 @@ def _extract_page(table, company_key: str, period_key: str, period_data: PeriodD
         if not row or len(row) < 3:
             continue
 
-        raw_label = row[lob_col] if len(row) > lob_col else (row[0] or "")
+        # Try resolving from the primary LOB column
+        raw_label = row[lob_col] if len(row) > lob_col else None
         lob_key = _resolve_lob(raw_label, company_key)
+        
+        # If not found, try column 0 (Total rows often omit Sl.No and put label in Col 0)
+        if lob_key is None and lob_col != 0:
+            raw_label = row[0]
+            lob_key = _resolve_lob(raw_label, company_key)
+            
+        # If still not found, try combining col 0 and col 1 (rare but happens)
+        if lob_key is None and len(row) > 1:
+            raw_label = f"{row[0] or ''} {row[1] or ''}".strip()
+            lob_key = _resolve_lob(raw_label, company_key)
+
         if lob_key is None:
             continue
 
